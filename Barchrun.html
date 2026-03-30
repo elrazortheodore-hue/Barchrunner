@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BARCHRUN · Strategic Payload Extraction</title>
+    <style>
+        :root {
+            --bg-base: #040a14;
+            --bg-surface: #0a1626;
+            --accent-teal: #0E7C7B;
+            --accent-orange: #F4A426;
+            --text-main: #eef0f4;
+            --text-muted: #8899aa;
+            --font-sys: 'system-ui', -apple-system, sans-serif;
+            --font-mono: 'SFMono-Regular', Consolas, monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-sys);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Ambient Background */
+        .ambient-grid {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-image: 
+                linear-gradient(rgba(14, 124, 123, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(14, 124, 123, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+            mask-image: radial-gradient(circle at center, black 20%, transparent 80%);
+            -webkit-mask-image: radial-gradient(circle at center, black 20%, transparent 80%);
+        }
+
+        /* Scroll Animation Classes */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 1s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        section {
+            padding: 120px 0;
+            position: relative;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding-top: 80px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(14, 124, 123, 0.1);
+            border: 1px solid rgba(14, 124, 123, 0.3);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--accent-teal);
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 {
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 900;
+            letter-spacing: -2px;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #fff 0%, #8899aa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: clamp(1.1rem, 2vw, 1.25rem);
+            color: var(--text-muted);
+            max-width: 600px;
+            margin-bottom: 48px;
+        }
+
+        /* CTA Button */
+        .cta-wrapper {
+            position: relative;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-teal), #0a5c5b);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 18px 48px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(14, 124, 123, 0.3);
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(14, 124, 123, 0.5);
+            border-color: rgba(255,255,255,0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(1px);
+        }
+
+        #sys-status {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--accent-orange);
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        /* Features Section */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            align-items: center;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            fill: none;
+            stroke: var(--accent-teal);
+            stroke-width: 1.5;
+            margin-bottom: 24px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 16px;
+            color: #fff;
+        }
+
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .barch-ref {
+            color: var(--accent-orange);
+            text-decoration: none;
+            font-weight: 600;
+            border-bottom: 1px dashed var(--accent-orange);
+            transition: color 0.2s;
+        }
+        .barch-ref:hover { color: #fff; border-bottom-color: #fff; }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            background: var(--bg-surface);
+            padding: 60px 0 30px;
+            margin-top: 60px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-bottom: 60px;
+        }
+
+        .footer-col h4 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li { margin-bottom: 12px; }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer-links a:hover { color: var(--accent-teal); }
+
+        .footer-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .social-icons { display: flex; gap: 16px; }
+        .social-icons a { color: var(--text-muted); transition: color 0.2s; }
+        .social-icons a:hover { color: var(--accent-teal); }
+        .social-icons svg { width: 20px; height: 20px; fill: currentColor; }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-grid"></div>
+
+    <div class="container">
+        <section class="hero reveal">
+            <div class="hero-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="2"/></svg>
+                VTOL LOGISTICS ENGINE
+            </div>
+            <h1>BARCHRUN</h1>
+            <p>A high-fidelity logistics simulation. Navigate urban airspaces, secure critical payloads, and execute flawless base extractions. Inspired by the engineering at <a href="https://barch.edgeone.app" target="_blank" class="barch-ref">Barch</a>.</p>
+            
+            <div class="cta-wrapper">
+                <button class="btn-primary" id="btn-engage">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    ENGAGE SIMULATION
+                </button>
+                <div id="sys-status">CALCULATING OPTIMAL VECTOR...</div>
+            </div>
+        </section>
+
+        <section class="reveal">
+            <div class="grid-2">
+                <div class="feature-card">
+                    <svg class="feature-icon" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                    <h3>The Objective</h3>
+                    <p>Pilot advanced VTOL aircraft through complex environments. Your mission: locate scattered payload caches using onboard sonar, hook them seamlessly, and transport them to the central base ring.</p>
+                </div>
+                <div class="feature-card">
+                    <svg class="feature-icon" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                    <h3>Cross-Platform Scale</h3>
+                    <p>Engineered for maximum deployment flexibility. Whether you are operating on a mobile touchscreen or a high-performance desktop rig, the simulation automatically scales its control schema to your hardware.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid reveal">
+                <div class="footer-col">
+                    <h4>Direct Access</h4>
+                    <ul class="footer-links">
+                        <li><a href="https://bachrunnermobile.edgeone.app/" target="_blank">Mobile Client</a></li>
+                        <li><a href="https://bachrunnerdesktop.edgeone.app/" target="_blank">Desktop Client</a></li>
+                        <li><a href="https://barch.edgeone.app" target="_blank">Barch Corporate</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-col">
+                    <h4>Developer Network</h4>
+                    <ul class="footer-links">
+                        <li>
+                            <a href="mailto:elrazortheodore@gmail.com?subject=Inquiry%20via%20Barchrun%20Landing%20Page&body=Hello%20Ederaefe,%0A%0AI%20am%20reaching%20out%20from%20the%20Barchrun%20simulation%20portal.%0A%0A[Enter your message here]">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                                Contact Support
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom reveal">
+                <p>&copy; 2026 Barchrun Systems. All operational parameters secure.</p>
+                <div class="social-icons">
+                    <a href="https://www.linkedin.com/in/ederaefe" target="_blank" aria-label="LinkedIn">
+                        <svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // --- SCROLL ANIMATION OBSERVER ---
+        const observerOptions = { root: null, rootMargin: '0px', threshold: 0.1 };
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        // --- HARDWARE DETECTION & ROUTING ENGINE ---
+        function determinePlatform() {
+            const ua = navigator.userAgent || navigator.vendor || window.opera;
+            
+            // Check for explicit mobile patterns
+            if (/android/i.test(ua) || /iPad|iPhone|iPod/.test(ua) || /windows phone/i.test(ua)) {
+                return 'MOBILE';
+            }
+            
+            // Check for modern touch devices (like newer iPads) masking as desktop
+            if (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && window.innerWidth <= 1024) {
+                return 'MOBILE';
+            }
+
+            // Default fallback
+            return 'DESKTOP';
+        }
+
+        document.getElementById('btn-engage').addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            const btn = e.currentTarget;
+            const statusText = document.getElementById('sys-status');
+            
+            // UI Feedback state
+            btn.style.transform = 'scale(0.95)';
+            btn.style.opacity = '0.8';
+            statusText.style.opacity = '1';
+            
+            // Simulate routing calculation for aesthetic
+            setTimeout(() => {
+                const platform = determinePlatform();
+                
+                if (platform === 'MOBILE') {
+                    statusText.textContent = "ROUTING TO MOBILE CLIENT...";
+                    window.location.href = "https://bachrunnermobile.edgeone.app/";
+                } else {
+                    statusText.textContent = "ROUTING TO DESKTOP CLIENT...";
+                    window.location.href = "https://bachrunnerdesktop.edgeone.app/";
+                }
+            }, 600); // 600ms delay for visual feedback
+        });
+    </script>
+</body>
+</html>
